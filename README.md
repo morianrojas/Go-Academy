@@ -6,19 +6,19 @@
 
 </div>
 
-Aprende a jugar Go desde cero hasta un nivel avanzado mediante lecciones del maestro Roshi.[cite: 1]
+Aprende a jugar Go desde cero hasta un nivel avanzado mediante lecciones del maestro Roshi.
 
 **Utiliza la aplicación:**  
-[Go Academy](https://go-academy-master-roshi.netlify.app/)[cite: 1]
+[Go Academy](https://go-academy-master-roshi.netlify.app/)
 
-### Características[cite: 1]
-- Academia de Go con aprendizaje progresivo.[cite: 1]
-- Tablero interactivo.[cite: 1]
-- Puzzles y desafíos.[cite: 1]
-- Temática del universo de Dragon Ball.[cite: 1]
-- Partidas contra la inteligencia artificial.[cite: 1]
-- Sistema de experiencia, rangos y recompensas.[cite: 1]
-- Personalización visual del tablero y la aplicación.[cite: 1]
+### Características
+- Academia de Go con aprendizaje progresivo.
+- Tablero interactivo.
+- Puzzles y desafíos.
+- Temática del universo de Dragon Ball.
+- Partidas contra la inteligencia artificial.
+- Sistema de experiencia, rangos y recompensas.
+- Personalización visual del tablero y la aplicación.
 
 ---
 
