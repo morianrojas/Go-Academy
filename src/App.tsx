@@ -544,7 +544,7 @@ export default function App() {
 
   return (
     <div
-      className="relative min-h-screen bg-[var(--app-bg)] text-[var(--app-text)] flex flex-col pb-20 md:pb-10 transition-colors"
+      className="relative min-h-screen bg-[var(--app-bg)] text-[var(--app-text)] flex flex-col pb-12 md:pb-10 transition-colors"
       data-theme={effectiveAppTheme}
     >
       {/* Multi-layer Dragon Ball Parallax Background (Active when DRAGON_BALL theme is selected or previewed) */}
@@ -556,8 +556,8 @@ export default function App() {
 
       {/* Sticky Top Header */}
       <header className="sticky top-0 z-50 bg-[var(--app-surface)]/95 backdrop-blur-xs border-b border-[var(--app-border)]">
-        {/* Row 1: Brand, Navigation Links (with "Hoy" first), and Primary CTA */}
-        <div className="max-w-7xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between gap-6">
+        {/* Desktop Row 1: Brand, Navigation Links (with "Hoy" first), and Primary CTA */}
+        <div className="hidden md:flex max-w-7xl mx-auto px-4 md:px-8 py-3 items-center justify-between gap-6">
           <button
             type="button"
             onClick={() => handleSelectNavTab('HOME')}
@@ -568,7 +568,7 @@ export default function App() {
 
           <nav
             aria-label="Navegación principal"
-            className="hidden md:flex items-center gap-6 text-sm font-medium text-[var(--app-muted)]"
+            className="flex items-center gap-6 text-sm font-medium text-[var(--app-muted)]"
           >
             {(
               [
@@ -600,6 +600,40 @@ export default function App() {
 
           <div className="flex items-center gap-2.5 shrink-0" />
         </div>
+
+        {/* Mobile Top Navigation Bar ("Hoy" placed first, located at top to avoid bottom overlays) */}
+        <nav
+          aria-label="Navegación móvil"
+          className="md:hidden bg-[var(--app-surface)] px-1.5 py-1.5 grid grid-cols-5 items-center gap-1"
+        >
+          {(
+            [
+              { id: 'HOME', label: 'Hoy', Icon: Home },
+              { id: 'LEARN', label: 'Academia', Icon: GraduationCap },
+              { id: 'PUZZLES', label: 'Puzzles', Icon: Puzzle },
+              { id: 'PLAY', label: 'Práctica', Icon: Compass },
+              { id: 'PROFILE', label: 'Perfil', Icon: Settings },
+            ] as const
+          ).map(({ id, label, Icon }) => {
+            const active = activeTab === id && !activeLessonId;
+            return (
+              <button
+                key={id}
+                type="button"
+                data-testid={`mobile-nav-tab-${id}`}
+                onClick={() => handleSelectNavTab(id)}
+                className={`flex flex-col items-center justify-center gap-0.5 py-1 px-1 rounded-lg text-[11px] leading-tight transition-colors cursor-pointer border-b-2 ${
+                  active
+                    ? 'text-[var(--app-primary)] font-bold bg-[var(--app-subtle)]/80 border-[var(--app-primary)]'
+                    : 'text-[var(--app-muted)] font-medium border-transparent hover:text-[var(--app-text)]'
+                }`}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                <span className="truncate max-w-full">{label}</span>
+              </button>
+            );
+          })}
+        </nav>
 
         {/* Row 2: Compact Rank, Streak, Jade, XP & Quick Color Palette Switcher */}
         <div
@@ -2390,38 +2424,6 @@ export default function App() {
           testId="special-video-reward-overlay"
         />
       )}
-
-      {/* Mobile Bottom Navigation Bar ("Hoy" placed first) */}
-      <nav
-        aria-label="Navegación móvil"
-        className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-[var(--app-surface)] border-t border-[var(--app-border)] px-2 py-1.5 flex items-center justify-around"
-      >
-        {(
-          [
-            { id: 'HOME', label: 'Hoy', Icon: Home },
-            { id: 'LEARN', label: 'Academia', Icon: GraduationCap },
-            { id: 'PUZZLES', label: 'Puzzles', Icon: Puzzle },
-            { id: 'PLAY', label: 'Práctica', Icon: Compass },
-            { id: 'PROFILE', label: 'Perfil', Icon: Settings },
-          ] as const
-        ).map(({ id, label, Icon }) => {
-          const active = activeTab === id;
-          return (
-            <button
-              key={id}
-              type="button"
-              data-testid={`mobile-nav-tab-${id}`}
-              onClick={() => handleSelectNavTab(id)}
-              className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[11px] font-medium cursor-pointer ${
-                active ? 'text-[var(--app-primary)] font-bold' : 'text-[var(--app-muted)]'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              <span>{label}</span>
-            </button>
-          );
-        })}
-      </nav>
     </div>
   );
 }
