@@ -4,25 +4,25 @@
 
   <h1>Go Academy 🏁</h1>
 
-  <p>Aprende a jugar Go desde cero hasta un nivel avanzado mediante lecciones del maestro Roshi.</p>
+</div>
 
-  <p>
-    <strong>Utiliza la aplicación:</strong><br>
-    <a href="https://go-academy-master-roshi.netlify.app/">Go Academy</a>
-  </p>
+Aprende a jugar Go desde cero hasta un nivel avanzado mediante lecciones del maestro Roshi.[cite: 1]
 
-  <h3>Características</h3>
-  <ul style="display: inline-block; text-align: left;">
-    <li>Academia de Go con aprendizaje progresivo.</li>
-    <li>Tablero interactivo.</li>
-    <li>Puzzles y desafíos.</li>
-    <li>Temática del universo de Dragon Ball.</li>
-    <li>Partidas contra la inteligencia artificial.</li>
-    <li>Sistema de experiencia, rangos y recompensas.</li>
-    <li>Personalización visual del tablero y la aplicación.</li>
-  </ul>
+**Utiliza la aplicación:**  
+[Go Academy](https://go-academy-master-roshi.netlify.app/)[cite: 1]
 
-  <hr width="60%">
+### Características[cite: 1]
+- Academia de Go con aprendizaje progresivo.[cite: 1]
+- Tablero interactivo.[cite: 1]
+- Puzzles y desafíos.[cite: 1]
+- Temática del universo de Dragon Ball.[cite: 1]
+- Partidas contra la inteligencia artificial.[cite: 1]
+- Sistema de experiencia, rangos y recompensas.[cite: 1]
+- Personalización visual del tablero y la aplicación.[cite: 1]
+
+---
+
+<div align="center">
 
   <h2>Built with AI Studio</h2>
 
