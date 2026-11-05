@@ -752,39 +752,29 @@ export const AcademyDojoHero: React.FC<AcademyDojoHeroProps> = ({
                 }
                 maxWidthClass="max-w-[360px] sm:max-w-[390px]"
               />
-              <p
-                className="mt-2 text-[11px] text-[var(--app-muted)] text-center leading-snug"
-                data-testid="hero-review-board-status"
-              >
-                {!hasCompletedFirstLesson ? (
-                  <span>
-                    Completa la <strong>Clase 1</strong> para habilitar los ejercicios de repaso en este tablero.
-                  </span>
-                ) : isAllHoyReviewsLockedToday ? (
-                  <span className="font-semibold text-[#059669]">
-                    ✓ Terminaste tus repasos de hoy. Una vez resueltos quedan bloqueados por hoy (puedes desbloquearlos en Perfil → Configuración).
-                  </span>
-                ) : isCurrentScenarioLockedToday || heroBoardSolved ? (
-                  <span className="font-semibold text-[#059669]">
-                    ✓ ¡Práctica superada en {activeScenario.targetLabel}! Pasa al siguiente ejercicio de repaso.
-                  </span>
-                ) : (
-                  activeScenario.boardPrompt
-                )}
-              </p>
+              {!isAllHoyReviewsLockedToday && (
+                <p
+                  className="mt-2 text-[11px] text-[var(--app-muted)] text-center leading-snug"
+                  data-testid="hero-review-board-status"
+                >
+                  {!hasCompletedFirstLesson ? (
+                    <span>
+                      Completa la <strong>Clase 1</strong> para habilitar los ejercicios de repaso en este tablero.
+                    </span>
+                  ) : isCurrentScenarioLockedToday || heroBoardSolved ? (
+                    <span className="font-semibold text-[#059669]">
+                      ✓ ¡Práctica superada en {activeScenario.targetLabel}! Pasa al siguiente ejercicio de repaso.
+                    </span>
+                  ) : (
+                    activeScenario.boardPrompt
+                  )}
+                </p>
+              )}
             </div>
           </div>
 
           {/* 2 Last Concluded Lessons + 3rd Continuing Lesson */}
           <div className="space-y-2" data-testid="hero-recent-lessons-section">
-            <div className="flex items-center justify-between gap-2 text-[11px] font-semibold text-[var(--app-muted)]">
-              <span className="truncate">
-                {hasCompletedFirstLesson ? 'Últimas clases concluidas y siguiente' : 'Próximas clases del programa'}
-              </span>
-              <span className="font-mono text-[var(--app-primary)] shrink-0">
-                {completedLessonsCount} resuelta(s) · 1 en turno
-              </span>
-            </div>
 
             <div
               className="grid grid-cols-3 gap-2.5"
@@ -850,31 +840,33 @@ export const AcademyDojoHero: React.FC<AcademyDojoHeroProps> = ({
           </div>
         </div>
 
-        {/* Child 3: Roshi Pager Row + Primary & Secondary CTAs (Below Board on Mobile; Left bottom on PC) */}
+        {/* Child 3: Roshi Pager Row + Primary CTA (Below Board on Mobile; Left bottom on PC) */}
         <div className="lg:col-span-7 lg:col-start-1 lg:row-start-2 flex flex-col justify-between space-y-4">
           {hasCompletedFirstLesson ? (
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-xs text-[var(--app-muted)] font-medium">
-                {isAllHoyReviewsLockedToday
-                  ? `Entrenamiento de hoy en esta sección completado ✓`
-                  : `Repaso ${currentIdx + 1} de ${reviewScenarios.length} (Clases realizadas)`}
-              </span>
+            (!isAllHoyReviewsLockedToday || canAdvanceToNextReview) && (
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                {!isAllHoyReviewsLockedToday && (
+                  <span className="text-xs text-[var(--app-muted)] font-medium">
+                    {`Repaso ${currentIdx + 1} de ${reviewScenarios.length} (Clases realizadas)`}
+                  </span>
+                )}
 
-              {canAdvanceToNextReview && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleAdvanceOrFinishReview();
-                    centerActiveGoBoardInView();
-                  }}
-                  className="px-3.5 py-1.5 rounded-xl bg-[var(--app-subtle)] border border-[var(--app-border)] text-xs font-semibold text-[var(--app-primary)] hover:opacity-90 transition-all inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
-                  data-testid="next-roshi-teaching-btn"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Siguiente Repaso de Roshi</span>
-                </button>
-              )}
-            </div>
+                {canAdvanceToNextReview && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleAdvanceOrFinishReview();
+                      centerActiveGoBoardInView();
+                    }}
+                    className="px-3.5 py-1.5 rounded-xl bg-[var(--app-subtle)] border border-[var(--app-border)] text-xs font-semibold text-[var(--app-primary)] hover:opacity-90 transition-all inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+                    data-testid="next-roshi-teaching-btn"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Siguiente Repaso de Roshi</span>
+                  </button>
+                )}
+              </div>
+            )
           ) : (
             <div className="text-xs text-[var(--app-muted)] font-medium">
               El repaso guiado con el Maestro Roshi se activará al concluir la Clase 1.
@@ -891,17 +883,6 @@ export const AcademyDojoHero: React.FC<AcademyDojoHeroProps> = ({
               <Play className="w-4 h-4 fill-current shrink-0" />
               <span className="truncate">
                 Empezar Lección {lessonNumberTag}: {nextLesson.title}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={onOpenPuzzles}
-              className="px-4 py-3.5 rounded-2xl bg-[var(--app-subtle)] border border-[var(--app-border)] text-[var(--app-text)] hover:border-[var(--app-primary)] text-xs md:text-sm font-semibold transition-all inline-flex items-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
-            >
-              <Compass className="w-4 h-4 text-[var(--app-primary)] shrink-0" />
-              <span>
-                Resolver Problemas ({solvedPuzzlesCount}/{totalPuzzlesCount})
               </span>
             </button>
           </div>

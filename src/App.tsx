@@ -14,6 +14,7 @@ import {
   Lock,
   ArrowRight,
   Download,
+  Upload,
   Palette,
   Volume2,
   VolumeX,
@@ -131,6 +132,8 @@ export default function App() {
     'NONE' | 'REVIEW' | 'BADGES' | 'GLOSSARY'
   >('REVIEW');
   const [showProfileDataOptions, setShowProfileDataOptions] = useState<boolean>(false);
+  const [importJsonStatus, setImportJsonStatus] = useState<'SUCCESS' | 'ERROR' | null>(null);
+  const importFileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [cameFromOnboardingStartLesson, setCameFromOnboardingStartLesson] =
     useState<boolean>(false);
   const [showAcademyScrollTopCue, setShowAcademyScrollTopCue] = useState<boolean>(false);
@@ -2308,35 +2311,74 @@ export default function App() {
                   </button>
 
                   {showProfileDataOptions && (
-                    <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[var(--app-border)]">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setShowOnboardingModal(true)}
-                          className="px-3.5 py-2 rounded-xl border border-[var(--app-border)] text-xs font-medium text-[var(--app-text)] hover:bg-[var(--app-subtle)] cursor-pointer"
-                        >
-                          Repetir bienvenida
-                        </button>
+                    <div className="space-y-2.5 pt-3 border-t border-[var(--app-border)]">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowOnboardingModal(true)}
+                            className="px-3.5 py-2 rounded-xl border border-[var(--app-border)] text-xs font-medium text-[var(--app-text)] hover:bg-[var(--app-subtle)] cursor-pointer"
+                          >
+                            Repetir bienvenida
+                          </button>
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const blob = new Blob([JSON.stringify(userState, null, 2)], {
-                              type: 'application/json',
-                            });
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = `camino-de-go-progreso-${todayStr}.json`;
-                            a.click();
-                            URL.revokeObjectURL(url);
-                          }}
-                          className="px-3.5 py-2 rounded-xl border border-[var(--app-border)] text-xs font-medium text-[var(--app-text)] hover:bg-[var(--app-subtle)] flex items-center gap-1.5 cursor-pointer"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          <span>Exportar JSON</span>
-                        </button>
-                      </div>
+                          <button
+                            type="button"
+                            data-testid="export-json-btn"
+                            onClick={() => {
+                              const blob = new Blob([JSON.stringify(userState, null, 2)], {
+                                type: 'application/json',
+                              });
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = `camino-de-go-progreso-${todayStr}.json`;
+                              a.click();
+                              URL.revokeObjectURL(url);
+                            }}
+                            className="px-3.5 py-2 rounded-xl border border-[var(--app-border)] text-xs font-medium text-[var(--app-text)] hover:bg-[var(--app-subtle)] flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>Exportar JSON</span>
+                          </button>
+
+                          <input
+                            ref={importFileInputRef}
+                            type="file"
+                            accept=".json,application/json"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              e.target.value = '';
+                              if (!file) return;
+                              try {
+                                const text = await file.text();
+                                const restored = storageRepository.importUserStateFromJson(text);
+                                if (restored) {
+                                  setUserState(restored);
+                                  setPreviewAppTheme(null);
+                                  setPreviewBoardTheme(null);
+                                  setImportJsonStatus('SUCCESS');
+                                } else {
+                                  setImportJsonStatus('ERROR');
+                                }
+                              } catch {
+                                setImportJsonStatus('ERROR');
+                              }
+                              setTimeout(() => setImportJsonStatus(null), 4000);
+                            }}
+                          />
+
+                          <button
+                            type="button"
+                            data-testid="import-json-btn"
+                            onClick={() => importFileInputRef.current?.click()}
+                            className="px-3.5 py-2 rounded-xl border border-[var(--app-border)] text-xs font-medium text-[var(--app-text)] hover:bg-[var(--app-subtle)] flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>Importar JSON</span>
+                          </button>
+                        </div>
 
                       {!confirmResetProgress ? (
                         <button
@@ -2381,6 +2423,22 @@ export default function App() {
                           >
                             Cancelar
                           </button>
+                        </div>
+                      )}
+                      </div>
+
+                      {importJsonStatus && (
+                        <div
+                          data-testid="import-json-status"
+                          className={`text-xs font-semibold px-3 py-2 rounded-xl border ${
+                            importJsonStatus === 'SUCCESS'
+                              ? 'bg-[#EAF7F0] text-[#059669] border-[#059669]/30'
+                              : 'bg-red-50 text-red-800 border-red-200'
+                          }`}
+                        >
+                          {importJsonStatus === 'SUCCESS'
+                            ? '✓ Progreso importado y restaurado correctamente.'
+                            : 'No se pudo importar el archivo. Verifica que sea un respaldo JSON válido de Camino de Go.'}
                         </div>
                       )}
                     </div>

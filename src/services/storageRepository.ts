@@ -1136,4 +1136,84 @@ export const storageRepository = {
     this.saveUserState(fresh);
     return fresh;
   },
+
+  importUserStateFromJson(rawJson: string): UserState | null {
+    try {
+      const parsed = JSON.parse(rawJson);
+      if (
+        !parsed ||
+        typeof parsed !== 'object' ||
+        !parsed.profile ||
+        typeof parsed.profile !== 'object'
+      ) {
+        return null;
+      }
+
+      const defaults = createDefaultUserState(true);
+      const unlockedAppThemes: AppThemeId[] = Array.isArray(parsed.profile.unlockedAppThemes)
+        ? parsed.profile.unlockedAppThemes
+        : [...DEFAULT_UNLOCKED_APP_THEMES];
+      for (const defaultTheme of DEFAULT_UNLOCKED_APP_THEMES) {
+        if (!unlockedAppThemes.includes(defaultTheme)) {
+          unlockedAppThemes.push(defaultTheme);
+        }
+      }
+
+      const unlockedBoardThemes: BoardThemeId[] = Array.isArray(parsed.profile.unlockedBoardThemes)
+        ? parsed.profile.unlockedBoardThemes
+        : [...DEFAULT_UNLOCKED_BOARD_THEMES];
+      for (const defaultBoard of DEFAULT_UNLOCKED_BOARD_THEMES) {
+        if (!unlockedBoardThemes.includes(defaultBoard)) {
+          unlockedBoardThemes.push(defaultBoard);
+        }
+      }
+
+      const requestedAppTheme: AppThemeId = parsed.profile.appTheme ?? 'KAYA';
+      const requestedBoardTheme: BoardThemeId = parsed.profile.boardTheme ?? 'KAYA_TRADICIONAL';
+
+      const hydrated: UserState = {
+        ...defaults,
+        ...parsed,
+        profile: {
+          ...defaults.profile,
+          ...parsed.profile,
+          onboardingCompleted: true,
+          unlockedAppThemes,
+          unlockedBoardThemes,
+          appTheme: unlockedAppThemes.includes(requestedAppTheme) ? requestedAppTheme : 'KAYA',
+          boardTheme: unlockedBoardThemes.includes(requestedBoardTheme)
+            ? requestedBoardTheme
+            : 'KAYA_TRADICIONAL',
+          themeUnlocksInitializedV2: true,
+          themeUnlocksInitializedV3: true,
+          dragonBallLockedV1: true,
+          jadeInitializedV2: true,
+        },
+        xp: typeof parsed.xp === 'number' && parsed.xp >= 0 ? parsed.xp : 0,
+        jade: typeof parsed.jade === 'number' && parsed.jade >= 0 ? parsed.jade : 2,
+        streakDays:
+          typeof parsed.streakDays === 'number' && parsed.streakDays >= 0 ? parsed.streakDays : 0,
+        awardedXpKeys: Array.isArray(parsed.awardedXpKeys) ? parsed.awardedXpKeys : [],
+        lessonProgress: enforceSequentialLessonUnlocks(parsed.lessonProgress || {}),
+        puzzleRecords:
+          parsed.puzzleRecords && typeof parsed.puzzleRecords === 'object'
+            ? parsed.puzzleRecords
+            : {},
+        skillMastery: {
+          ...JSON.parse(JSON.stringify(INITIAL_SKILL_MASTERY)),
+          ...(parsed.skillMastery || {}),
+        },
+        dailyHistory:
+          parsed.dailyHistory && typeof parsed.dailyHistory === 'object'
+            ? parsed.dailyHistory
+            : defaults.dailyHistory,
+      };
+
+      const evaluated = evaluateAchievements(hydrated);
+      this.saveUserState(evaluated);
+      return evaluated;
+    } catch {
+      return null;
+    }
+  },
 };
