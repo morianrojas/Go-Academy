@@ -470,6 +470,9 @@ function evaluateAchievements(state: UserState): UserState {
   };
 }
 
+export const DAILY_MISSION_XP_REWARD = 15;
+export const DAILY_MISSION_JADE_REWARD = 4;
+
 function recordMeaningfulActivity(
   state: UserState,
   xpDelta: number,
@@ -517,6 +520,14 @@ function recordMeaningfulActivity(
         (allCatalogPuzzlesSolved && (nextInfinitePuzzles >= 2 || nextPuzzles >= 1));
 
   const goalMet = prevDaily.goalMet || (classesRequirementMet && puzzlesRequirementMet);
+  const dailyMissionRewardKey = `daily_mission:${today}`;
+  const alreadyAwardedDailyMission = (state.awardedXpKeys || []).includes(dailyMissionRewardKey);
+  const awardDailyMissionBonus = goalMet && !alreadyAwardedDailyMission;
+  const bonusXp = awardDailyMissionBonus ? DAILY_MISSION_XP_REWARD : 0;
+  const bonusJade = awardDailyMissionBonus ? DAILY_MISSION_JADE_REWARD : 0;
+  const nextAwardedXpKeys = awardDailyMissionBonus
+    ? [...(state.awardedXpKeys || []), dailyMissionRewardKey]
+    : state.awardedXpKeys;
 
   let nextStreak = state.streakDays;
   let nextLastActive = state.lastActiveDate;
@@ -528,7 +539,9 @@ function recordMeaningfulActivity(
 
   const nextState: UserState = {
     ...state,
-    xp: state.xp + xpDelta,
+    xp: state.xp + xpDelta + bonusXp,
+    jade: (state.jade ?? 2) + bonusJade,
+    awardedXpKeys: nextAwardedXpKeys,
     streakDays: nextStreak,
     lastActiveDate: nextLastActive,
     dailyHistory: {
@@ -537,7 +550,7 @@ function recordMeaningfulActivity(
         ...prevDaily,
         dateLocal: today,
         minutesPracticed: nextMinutes,
-        xpEarned: prevDaily.xpEarned + xpDelta,
+        xpEarned: prevDaily.xpEarned + xpDelta + bonusXp,
         lessonsCompleted: nextLessons,
         puzzlesSolved: nextPuzzles,
         infinitePuzzlesSolved: nextInfinitePuzzles,
@@ -633,6 +646,20 @@ export const storageRepository = {
       if (typeof parsed.jade !== 'number' || !parsed.profile.jadeInitializedV2) {
         parsed.jade = 2;
         parsed.profile.jadeInitializedV2 = true;
+      }
+      const todayKey = getLocalTodayString();
+      const todayMissionKey = `daily_mission:${todayKey}`;
+      if (
+        parsed.dailyHistory?.[todayKey]?.goalMet &&
+        !(parsed.awardedXpKeys || []).includes(todayMissionKey)
+      ) {
+        parsed.xp = (parsed.xp || 0) + DAILY_MISSION_XP_REWARD;
+        parsed.jade = (parsed.jade ?? 2) + DAILY_MISSION_JADE_REWARD;
+        parsed.awardedXpKeys = [...(parsed.awardedXpKeys || []), todayMissionKey];
+        parsed.dailyHistory[todayKey] = {
+          ...parsed.dailyHistory[todayKey],
+          xpEarned: (parsed.dailyHistory[todayKey].xpEarned || 0) + DAILY_MISSION_XP_REWARD,
+        };
       }
       if (autostartParam && !parsed.profile.onboardingCompleted) {
         parsed.profile.onboardingCompleted = true;

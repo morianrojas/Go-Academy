@@ -36,6 +36,8 @@ import {
   UserState,
 } from './types/go';
 import {
+  DAILY_MISSION_JADE_REWARD,
+  DAILY_MISSION_XP_REWARD,
   detectStudentTitlePromotion,
   getLocalTodayString,
   getStudentLevelFromXp,
@@ -204,6 +206,14 @@ export default function App() {
 
   const prevGoalMetRef = React.useRef<boolean>(todayActivity.goalMet);
   const pendingDailyMissionVideoRef = React.useRef<boolean>(false);
+  const [puzzleAutoAdvanceToken, setPuzzleAutoAdvanceToken] = useState<number>(0);
+  const [hoyCompletionSpotlightToken, setHoyCompletionSpotlightToken] = useState<number>(0);
+  const pendingPostSpecialVideoActionRef = React.useRef<
+    | { type: 'NEXT_PUZZLE' }
+    | { type: 'NEXT_LESSON'; nextLessonId: string }
+    | { type: 'HOY_REVIEWS_COMPLETED' }
+    | null
+  >(null);
   const pendingSpecialVideoQueueRef = React.useRef<
     Array<{
       videoUrl: string;
@@ -274,21 +284,15 @@ export default function App() {
     );
   };
 
-  const flushLessonDismissSpecialVideos = () => {
-    while (pendingLessonDismissSpecialVideosRef.current.length > 0) {
-      const nextItem = pendingLessonDismissSpecialVideosRef.current.shift()!;
-      enqueueOrShowSpecialVideo(nextItem);
-    }
-    if (pendingDailyMissionVideoRef.current) {
-      pendingDailyMissionVideoRef.current = false;
-      showDailyMissionSpecialVideo();
-    }
-  };
-
-  const buildDailyMissionSolvedSummary = () => {
-    const lessonsToday = todayActivity.lessonsCompleted;
-    const puzzlesToday = todayActivity.puzzlesSolved;
-    const infiniteToday = todayActivity.infinitePuzzlesSolved ?? 0;
+  const buildDailyMissionSolvedSummary = (activityOverride?: {
+    lessonsCompleted?: number;
+    puzzlesSolved?: number;
+    infinitePuzzlesSolved?: number;
+  }) => {
+    const lessonsToday = activityOverride?.lessonsCompleted ?? todayActivity.lessonsCompleted;
+    const puzzlesToday = activityOverride?.puzzlesSolved ?? todayActivity.puzzlesSolved;
+    const infiniteToday =
+      activityOverride?.infinitePuzzlesSolved ?? (todayActivity.infinitePuzzlesSolved ?? 0);
 
     if (isAllCatalogCompleted && lessonsToday === 0) {
       const count = Math.max(2, infiniteToday || puzzlesToday);
@@ -305,13 +309,42 @@ export default function App() {
     }`;
   };
 
+  const buildDailyMissionSpecialVideoItem = (activityOverride?: {
+    lessonsCompleted?: number;
+    puzzlesSolved?: number;
+    infinitePuzzlesSolved?: number;
+  }) => ({
+    videoUrl: ROSHI_ESPECIAL_2_VIDEO_URL,
+    congratsTitle: 'Cumpliste con tu Misión Diaria',
+    accomplishmentText: 'Cumpliste con tu Misión Diaria',
+    bottomScoreText: `${buildDailyMissionSolvedSummary(activityOverride)} · Recompensa: +${DAILY_MISSION_XP_REWARD} XP y +${DAILY_MISSION_JADE_REWARD} Jade`,
+  });
+
   const showDailyMissionSpecialVideo = () => {
-    enqueueOrShowSpecialVideo({
-      videoUrl: ROSHI_ESPECIAL_2_VIDEO_URL,
-      congratsTitle: 'Cumpliste con tu Misión Diaria',
-      accomplishmentText: 'Cumpliste con tu Misión Diaria',
-      bottomScoreText: buildDailyMissionSolvedSummary(),
-    });
+    enqueueOrShowSpecialVideo(buildDailyMissionSpecialVideoItem());
+  };
+
+  const flushLessonDismissSpecialVideos = (options?: {
+    advanceToNextLessonId?: string | null;
+  }): boolean => {
+    let enqueuedAny = false;
+    while (pendingLessonDismissSpecialVideosRef.current.length > 0) {
+      const nextItem = pendingLessonDismissSpecialVideosRef.current.shift()!;
+      enqueueOrShowSpecialVideo(nextItem);
+      enqueuedAny = true;
+    }
+    if (pendingDailyMissionVideoRef.current) {
+      pendingDailyMissionVideoRef.current = false;
+      showDailyMissionSpecialVideo();
+      enqueuedAny = true;
+    }
+    if (enqueuedAny && options?.advanceToNextLessonId) {
+      pendingPostSpecialVideoActionRef.current = {
+        type: 'NEXT_LESSON',
+        nextLessonId: options.advanceToNextLessonId,
+      };
+    }
+    return enqueuedAny;
   };
 
   useEffect(() => {
@@ -374,6 +407,7 @@ export default function App() {
   };
 
   const handleSelectNavTab = (nextTab: NavTab) => {
+    pendingPostSpecialVideoActionRef.current = null;
     resetViewportScrollToTop();
     resetCollapsibleMenus();
     setAcademyStageFilter('ALL');
@@ -830,12 +864,12 @@ export default function App() {
                 )}
                 {activeHeaderStatInfo === 'JADE' && (
                   <>
-                    <strong>Jade imperial ({userState.jade}):</strong> Ganas <strong>+1 Jade por cada clase completada</strong>, <strong>+1 Jade por cada puzzle resuelto</strong> y Jades adicionales por insignias para desbloquear paletas y tableros en Perfil.
+                    <strong>Jade imperial ({userState.jade}):</strong> Ganas <strong>+1 Jade por cada clase completada</strong>, <strong>+1 Jade por cada puzzle resuelto</strong>, <strong>+{DAILY_MISSION_JADE_REWARD} Jade por completar la Misión Diaria</strong> y Jades adicionales por insignias para desbloquear paletas y tableros en Perfil.
                   </>
                 )}
                 {activeHeaderStatInfo === 'XP' && (
                   <>
-                    <strong>Experiencia ({userState.xp} XP):</strong> Ganas +20 XP (y +1 Jade) por clase completada y hasta +7 XP (y +1 Jade) por puzzle resuelto.
+                    <strong>Experiencia ({userState.xp} XP):</strong> Ganas +20 XP (y +1 Jade) por clase completada, hasta +7 XP (y +1 Jade) por puzzle resuelto y <strong>+{DAILY_MISSION_XP_REWARD} XP (y +{DAILY_MISSION_JADE_REWARD} Jade) por cumplir la Misión Diaria</strong>.
                   </>
                 )}
               </span>
@@ -867,7 +901,11 @@ export default function App() {
               );
             }}
             onCompleteLesson={(lessonId, scorePct) => {
+              const todayKey = getLocalTodayString();
+              const wasGoalMet = Boolean(userState.dailyHistory[todayKey]?.goalMet);
               const res = storageRepository.completeLesson(userState, lessonId, scorePct);
+              const isNowGoalMet = Boolean(res.state.dailyHistory[todayKey]?.goalMet);
+              const goalJustMetNow = !wasGoalMet && isNowGoalMet;
               const promotion = detectStudentTitlePromotion(userState.xp, res.state.xp);
               const boundary = getAcademyLevelBoundaryInfo(
                 lessonId,
@@ -875,18 +913,61 @@ export default function App() {
               );
               const usesLessonSpecialVideo =
                 boundary.isLastLessonOfLevel || boundary.levelId === 'AVANZADO';
+              const nextLessonForCompleted =
+                LESSONS_CATALOG[
+                  LESSONS_CATALOG.findIndex((l) => l.id === activeLessonObj.id) + 1
+                ] ?? null;
+
               setUserState(res.state);
 
+              if (goalJustMetNow) {
+                prevGoalMetRef.current = true;
+                pendingDailyMissionVideoRef.current = false;
+              }
+
+              const specialItemsToPlay: Array<{
+                videoUrl: string;
+                congratsTitle: string;
+                subtitle?: string;
+                xpEarned?: number;
+                totalJade?: number;
+                accomplishmentText?: string;
+                specialLevelDialogue?: string;
+                bottomScoreText?: string;
+              }> = [];
+
               if (promotion) {
-                const promoModal = getTitlePromotionSpecialReward(
-                  promotion.newTier.title,
-                  promotion.newTier.rankLabel
+                specialItemsToPlay.push(
+                  getTitlePromotionSpecialReward(
+                    promotion.newTier.title,
+                    promotion.newTier.rankLabel
+                  )
                 );
+              }
+
+              if (goalJustMetNow) {
+                const updatedToday = res.state.dailyHistory[todayKey];
+                specialItemsToPlay.push(
+                  buildDailyMissionSpecialVideoItem({
+                    lessonsCompleted: updatedToday?.lessonsCompleted ?? 1,
+                    puzzlesSolved: updatedToday?.puzzlesSolved ?? 2,
+                    infinitePuzzlesSolved: updatedToday?.infinitePuzzlesSolved ?? 0,
+                  })
+                );
+              }
+
+              if (specialItemsToPlay.length > 0) {
                 if (usesLessonSpecialVideo) {
-                  pendingLessonDismissSpecialVideosRef.current.push(promoModal);
+                  pendingLessonDismissSpecialVideosRef.current.push(...specialItemsToPlay);
                   return { suppressLessonGifOverlay: false };
                 }
-                enqueueOrShowSpecialVideo(promoModal);
+                if (nextLessonForCompleted) {
+                  pendingPostSpecialVideoActionRef.current = {
+                    type: 'NEXT_LESSON',
+                    nextLessonId: nextLessonForCompleted.id,
+                  };
+                }
+                specialItemsToPlay.forEach((item) => enqueueOrShowSpecialVideo(item));
                 return { suppressLessonGifOverlay: true };
               }
 
@@ -904,9 +985,9 @@ export default function App() {
               ] ?? null
             }
             onSelectLesson={(nextId) => setActiveLessonId(nextId)}
-            onDismissCompleteCelebration={() => {
-              flushLessonDismissSpecialVideos();
-            }}
+            onDismissCompleteCelebration={(options) =>
+              flushLessonDismissSpecialVideos(options)
+            }
             totalJade={userState.jade ?? 2}
           />
         ) : (
@@ -956,6 +1037,9 @@ export default function App() {
                     setActiveTab('LEARN');
                   }}
                   onCompleteHoyReviews={() => {
+                    pendingPostSpecialVideoActionRef.current = {
+                      type: 'HOY_REVIEWS_COMPLETED',
+                    };
                     notifySpecialRewardPriority();
                     setSpecialVideoRewardModal({
                       open: true,
@@ -964,6 +1048,7 @@ export default function App() {
                       accomplishmentText: 'Terminaste tus Repasos de Hoy',
                     });
                   }}
+                  reopenCompletionSpotlightToken={hoyCompletionSpotlightToken}
                 />
 
                 {/* Compact Daily Summary & Quick Access Row */}
@@ -984,13 +1069,13 @@ export default function App() {
                             className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#059669] font-semibold text-[11px] hover:opacity-90 transition-opacity cursor-pointer"
                           >
                             <CheckCircle2 className="w-3 h-3 shrink-0" />
-                            <span>¡Cumplida!</span>
+                            <span>¡Cumplida! (+{DAILY_MISSION_XP_REWARD} XP · +{DAILY_MISSION_JADE_REWARD} Jade)</span>
                           </button>
                         ) : (
                           <span className="text-[11px] text-[var(--app-muted)] font-medium">
                             {isAllCatalogCompleted
-                              ? 'Meta: 2 puzzles infinitos'
-                              : 'Meta: 1 clase y 2 puzzles nuevos'}
+                              ? `Meta: 2 puzzles infinitos (+${DAILY_MISSION_XP_REWARD} XP · +${DAILY_MISSION_JADE_REWARD} Jade)`
+                              : `Meta: 1 clase y 2 puzzles (+${DAILY_MISSION_XP_REWARD} XP · +${DAILY_MISSION_JADE_REWARD} Jade)`}
                           </span>
                         )}
                         <span
@@ -1679,6 +1764,10 @@ export default function App() {
                   const isNowGoalMet = Boolean(
                     res.state.dailyHistory[getLocalTodayString()]?.goalMet
                   );
+                  const specialTriggered = Boolean(promotion || (!wasGoalMet && isNowGoalMet));
+                  if (params.solved && specialTriggered) {
+                    pendingPostSpecialVideoActionRef.current = { type: 'NEXT_PUZZLE' };
+                  }
                   if (promotion) {
                     const promoModal = getTitlePromotionSpecialReward(
                       promotion.newTier.title,
@@ -1691,7 +1780,7 @@ export default function App() {
                   setUserState(res.state);
                   return {
                     xpAwarded: res.xpAwarded,
-                    specialRewardTriggered: Boolean(promotion || (!wasGoalMet && isNowGoalMet)),
+                    specialRewardTriggered: specialTriggered,
                   };
                 }}
                 onOpenLesson={(lessonId) => {
@@ -1699,6 +1788,7 @@ export default function App() {
                   setActiveLessonId(lessonId);
                 }}
                 totalJade={userState.jade ?? 2}
+                autoAdvanceToken={puzzleAutoAdvanceToken}
               />
             )}
 
@@ -2470,15 +2560,29 @@ export default function App() {
                 ...nextQueued,
                 open: true,
               });
-            } else {
-              setSpecialVideoRewardModal((prev) => (prev ? { ...prev, open: false } : null));
-              if (pendingDailyMissionVideoRef.current && activeLessonId === null) {
-                pendingDailyMissionVideoRef.current = false;
-                showDailyMissionSpecialVideo();
-              }
+              return;
+            }
+            if (pendingDailyMissionVideoRef.current && activeLessonId === null) {
+              pendingDailyMissionVideoRef.current = false;
+              showDailyMissionSpecialVideo();
+              return;
+            }
+            setSpecialVideoRewardModal((prev) => (prev ? { ...prev, open: false } : null));
+            const postAction = pendingPostSpecialVideoActionRef.current;
+            pendingPostSpecialVideoActionRef.current = null;
+            if (postAction?.type === 'NEXT_PUZZLE') {
+              setPuzzleAutoAdvanceToken((t) => t + 1);
+            } else if (postAction?.type === 'NEXT_LESSON' && postAction.nextLessonId) {
+              setActiveLessonId(postAction.nextLessonId);
+            } else if (postAction?.type === 'HOY_REVIEWS_COMPLETED') {
+              setHoyCompletionSpotlightToken((t) => t + 1);
             }
           }}
-          actionLabel="Continuar"
+          actionLabel={
+            pendingPostSpecialVideoActionRef.current?.type === 'NEXT_PUZZLE'
+              ? 'Siguiente puzzle'
+              : 'Continuar'
+          }
           testId="special-video-reward-overlay"
         />
       )}

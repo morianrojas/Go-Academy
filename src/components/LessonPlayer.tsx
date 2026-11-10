@@ -274,7 +274,9 @@ export interface LessonPlayerProps {
   onOpenPuzzle?: (puzzleId: string) => void;
   nextLesson?: LessonContent | null;
   onSelectLesson?: (lessonId: string) => void;
-  onDismissCompleteCelebration?: () => void;
+  onDismissCompleteCelebration?: (options?: {
+    advanceToNextLessonId?: string | null;
+  }) => boolean | void;
   totalJade?: number;
 }
 
@@ -1474,15 +1476,21 @@ export const LessonPlayer: React.FC<LessonPlayerProps> = ({
             }
             onClose={() => {
               setShowCompleteCelebrationOverlay(false);
-              onDismissCompleteCelebration?.();
+              onDismissCompleteCelebration?.({
+                advanceToNextLessonId: nextLesson?.id ?? null,
+              });
             }}
             actionLabel={nextLesson ? `Siguiente: ${nextLesson.title}` : 'Continuar'}
             onAction={
               nextLesson && onSelectLesson
                 ? () => {
                     setShowCompleteCelebrationOverlay(false);
-                    onDismissCompleteCelebration?.();
-                    onSelectLesson(nextLesson.id);
+                    const deferredToSpecialVideo = onDismissCompleteCelebration?.({
+                      advanceToNextLessonId: nextLesson.id,
+                    });
+                    if (!deferredToSpecialVideo) {
+                      onSelectLesson(nextLesson.id);
+                    }
                   }
                 : undefined
             }

@@ -58,6 +58,7 @@ export interface PuzzleArenaProps {
   }) => { xpAwarded: number; specialRewardTriggered?: boolean };
   onOpenLesson?: (lessonId: string) => void;
   totalJade?: number;
+  autoAdvanceToken?: number;
 }
 
 const THEME_FILTER_OPTIONS: { id: PuzzleTheme | 'ALL' | 'REVIEW'; label: string }[] = [
@@ -88,6 +89,7 @@ export const PuzzleArena: React.FC<PuzzleArenaProps> = ({
   onRecordAttempt,
   onOpenLesson,
   totalJade = 2,
+  autoAdvanceToken = 0,
 }) => {
   const [selectedTheme, setSelectedTheme] = useState<PuzzleTheme | 'ALL' | 'REVIEW'>('ALL');
   const [selectedDifficulty, setSelectedDifficulty] = useState<
@@ -461,6 +463,16 @@ export const PuzzleArena: React.FC<PuzzleArenaProps> = ({
     }
   };
 
+  const prevAutoAdvanceTokenRef = React.useRef<number>(autoAdvanceToken);
+  useEffect(() => {
+    if (autoAdvanceToken > prevAutoAdvanceTokenRef.current) {
+      prevAutoAdvanceTokenRef.current = autoAdvanceToken;
+      if (status === 'SOLVED' || status === 'SOLUTION_SHOWN') {
+        handleNextPuzzle();
+      }
+    }
+  }, [autoAdvanceToken, status]);
+
   const solvedCount = Object.values(puzzleRecords).filter((r) => r.solved).length;
   const reviewCount = Object.values(puzzleRecords).filter((r) => r.needsReview).length;
 
@@ -498,9 +510,10 @@ export const PuzzleArena: React.FC<PuzzleArenaProps> = ({
           subtitle={activePuzzle.title}
           xpEarned={puzzleCelebrationOverlay.xpEarned}
           totalJade={totalJade}
-          onClose={() =>
-            setPuzzleCelebrationOverlay((prev) => (prev ? { ...prev, open: false } : null))
-          }
+          onClose={() => {
+            setPuzzleCelebrationOverlay(null);
+            handleNextPuzzle();
+          }}
           actionLabel="Siguiente puzzle"
           onAction={() => {
             setPuzzleCelebrationOverlay(null);

@@ -2282,7 +2282,17 @@ export const EXPANDED_LESSONS_CATALOG: LessonContent[] = [
       id: 'l12-tq-1',
       prompt: 'Pregunta de transferencia: Al calcular el valor de una jugada en el Yose, ¿por qué una jugada que te da 2 puntos a ti y le quita 2 puntos a tu rival vale en realidad 4 puntos en el marcador?',
       boardSize: 9,
-      initialStones: [{ x: 4, y: 0, color: 'BLACK' }],
+      initialStones: [
+        { x: 3, y: 1, color: 'BLACK' },
+        { x: 3, y: 2, color: 'BLACK' },
+        { x: 2, y: 2, color: 'BLACK' },
+        { x: 4, y: 1, color: 'WHITE' },
+        { x: 4, y: 2, color: 'WHITE' },
+        { x: 5, y: 2, color: 'WHITE' },
+        { x: 4, y: 0, color: 'BLACK' },
+        { x: 5, y: 0, color: 'WHITE' },
+        { x: 3, y: 0, color: 'BLACK' },
+      ],
       turn: 'BLACK',
       exerciseType: 'MULTIPLE_CHOICE',
       options: [

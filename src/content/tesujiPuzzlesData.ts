@@ -143,17 +143,18 @@ export const TESUJI_PUZZLES_CATALOG: PuzzleContent[] = [
     initialStones: [
       { x: 3, y: 4, color: 'BLACK' },
       { x: 4, y: 4, color: 'BLACK' },
-      { x: 5, y: 3, color: 'BLACK' },
-      { x: 5, y: 4, color: 'WHITE' },
-      { x: 4, y: 5, color: 'WHITE' },
-      { x: 3, y: 5, color: 'WHITE' },
-      { x: 2, y: 4, color: 'WHITE' },
-      { x: 5, y: 2, color: 'WHITE' },
       { x: 3, y: 2, color: 'BLACK' },
+      { x: 2, y: 4, color: 'WHITE' },
+      { x: 3, y: 5, color: 'WHITE' },
+      { x: 4, y: 5, color: 'WHITE' },
+      { x: 5, y: 4, color: 'WHITE' },
+      { x: 6, y: 3, color: 'WHITE' },
+      { x: 5, y: 2, color: 'WHITE' },
+      { x: 4, y: 2, color: 'WHITE' },
     ],
     turn: 'WHITE',
     objective:
-      'Juega Blanco: Parece imposible capturar las piedras negras de corte D5–E5 porque si cortas en E6 escapan por D6. Usa el Tesuji de Pinza (Hasami-tsuke) para hacer miai de ambos puntos.',
+      'Juega Blanco: Parece imposible capturar las piedras negras de corte D5–E5 porque si das atari en E6 escapan por D6. Usa el Tesuji de Pinza (Hasami-tsuke) para hacer miai de ambos puntos.',
     acceptedFirstMoves: [{ x: 3, y: 3 }],
     variations: [
       {
@@ -161,7 +162,7 @@ export const TESUJI_PUZZLES_CATALOG: PuzzleContent[] = [
         opponentReply: { x: 4, y: 3 },
         nextValidMoves: [{ x: 2, y: 3 }],
         explanationEs:
-          '¡Pinza magistral en D6 (Hasami-tsuke)! Cuando Negro conecta en E6, bloqueas en C6 y las tres piedras negras quedan encerradas sin salida.',
+          '¡Pinza magistral en D6 (Hasami-tsuke)! Cuando Negro extiende a E6 poniendo en atari tu piedra D6, conectas en C6 y las tres piedras negras (D5–E5–E6) quedan en atari y encerradas sin salida.',
       },
     ],
     wrongMoveExplanations: {

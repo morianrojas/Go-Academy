@@ -325,6 +325,7 @@ export interface AcademyDojoHeroProps {
   onOpenPuzzles: () => void;
   onSelectLevelFilter?: (filter: 'FUNDAMENTOS' | 'TACTICA_VIDA' | 'ESTRATEGIA_YOSE') => void;
   onCompleteHoyReviews?: () => void;
+  reopenCompletionSpotlightToken?: number;
 }
 
 export const AcademyDojoHero: React.FC<AcademyDojoHeroProps> = ({
@@ -348,12 +349,22 @@ export const AcademyDojoHero: React.FC<AcademyDojoHeroProps> = ({
   onStartLesson,
   onOpenPuzzles,
   onCompleteHoyReviews,
+  reopenCompletionSpotlightToken = 0,
 }) => {
   const [roshiIdx, setRoshiIdx] = useState(0);
   const [animPulse, setAnimPulse] = useState(0);
   const [solvedReviewIndices, setSolvedReviewIndices] = useState<number[]>(solvedHoyReviewIndices);
   const [suppressRoshiSpotlight, setSuppressRoshiSpotlight] = useState<boolean>(false);
   const hasCompletedFirstLesson = completedLessonsCount >= 1;
+
+  const prevReopenSpotlightTokenRef = React.useRef<number>(reopenCompletionSpotlightToken);
+  useEffect(() => {
+    if (reopenCompletionSpotlightToken > prevReopenSpotlightTokenRef.current) {
+      prevReopenSpotlightTokenRef.current = reopenCompletionSpotlightToken;
+      setSuppressRoshiSpotlight(false);
+      setAnimPulse((p) => p + 1);
+    }
+  }, [reopenCompletionSpotlightToken]);
 
   // Build 6 dynamic review scenarios from the user's last 2 completed lessons
   const reviewScenarios = useMemo(
@@ -622,7 +633,7 @@ export const AcademyDojoHero: React.FC<AcademyDojoHeroProps> = ({
                 }
                 interactionKey={
                   isAllHoyReviewsLockedToday
-                    ? 'hero-roshi-all-completed-today'
+                    ? `hero-roshi-all-completed-today-${animPulse}`
                     : `hero-roshi-${roshiIdx}-${animPulse}`
                 }
                 autoOpenSpotlight={!suppressRoshiSpotlight}
@@ -729,29 +740,51 @@ export const AcademyDojoHero: React.FC<AcademyDojoHeroProps> = ({
             </div>
 
             <div className="rounded-2xl bg-[var(--app-surface)] border border-[var(--app-border)] p-3 flex flex-col items-center">
-              <GoBoard
-                size={9}
-                board={heroBoardGame.board}
-                currentTurn={heroBoardGame.currentTurn}
-                lastMove={heroBoardGame.lastMove?.coord ?? null}
-                markers={
-                  !hasCompletedFirstLesson || heroBoardSolved || isCurrentScenarioLockedToday
-                    ? []
-                    : activeScenario.markers
-                }
-                visualLayers={defaultHeroLayers}
-                boardTheme={boardTheme}
-                onToggleLayer={onToggleLayer}
-                onSelectIntersection={
-                  hasCompletedFirstLesson && !isCurrentScenarioLockedToday && (!heroBoardSolved || allowRepeatHoyReviews)
-                    ? handleHeroBoardClick
-                    : undefined
-                }
-                interactive={
-                  hasCompletedFirstLesson && !isCurrentScenarioLockedToday && (!heroBoardSolved || allowRepeatHoyReviews)
-                }
-                maxWidthClass="max-w-[360px] sm:max-w-[390px]"
-              />
+              <div className="relative w-full flex flex-col items-center">
+                <GoBoard
+                  size={9}
+                  board={heroBoardGame.board}
+                  currentTurn={heroBoardGame.currentTurn}
+                  lastMove={heroBoardGame.lastMove?.coord ?? null}
+                  markers={
+                    !hasCompletedFirstLesson || heroBoardSolved || isCurrentScenarioLockedToday
+                      ? []
+                      : activeScenario.markers
+                  }
+                  visualLayers={defaultHeroLayers}
+                  boardTheme={boardTheme}
+                  onToggleLayer={onToggleLayer}
+                  onSelectIntersection={
+                    hasCompletedFirstLesson && !isCurrentScenarioLockedToday && (!heroBoardSolved || allowRepeatHoyReviews)
+                      ? handleHeroBoardClick
+                      : undefined
+                  }
+                  interactive={
+                    hasCompletedFirstLesson && !isCurrentScenarioLockedToday && (!heroBoardSolved || allowRepeatHoyReviews)
+                  }
+                  maxWidthClass="max-w-[360px] sm:max-w-[390px]"
+                />
+                {hasCompletedFirstLesson && isAllHoyReviewsLockedToday && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSuppressRoshiSpotlight(false);
+                      setAnimPulse((p) => p + 1);
+                    }}
+                    data-testid="hero-board-finalizado-overlay"
+                    aria-label="Repasos finalizados por hoy. Haz clic para ver el mensaje del Maestro Roshi"
+                    className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-black/15 backdrop-blur-[1px] cursor-pointer group focus:outline-none"
+                  >
+                    <span
+                      data-testid="hero-board-finalizado-badge"
+                      className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#091F18]/90 border border-emerald-400/70 text-emerald-200 font-display font-bold text-xs sm:text-sm tracking-wide shadow-lg animate-bounce group-hover:scale-105 transition-transform"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>Finalizado</span>
+                    </span>
+                  </button>
+                )}
+              </div>
               {!isAllHoyReviewsLockedToday && (
                 <p
                   className="mt-2 text-[11px] text-[var(--app-muted)] text-center leading-snug"
